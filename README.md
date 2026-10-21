@@ -231,6 +231,27 @@ systemctl --user restart dms     # niri live-reloads the config on its own
 (Or `dms setup headless --compositor niri --terminal kitty --force`, which backs up the old config itself.)
 Do not add `--no-systemd`: that variant adds `spawn-at-startup "dms" "run"`, which would start DMS twice.
 
+## Migrating from Dank Workstation (dank-ws)
+
+dux-ws is signed with a new cosign key, so an existing dank-ws machine must trust it before switching. Requires the first `ghcr.io/kmf/dux-ws` image to be published.
+
+1. Trust the new key:
+   ```
+   curl -fsSL https://raw.githubusercontent.com/kmf/dux-ws/main/cosign.pub | sudo tee /etc/pki/containers/dux-ws.pub >/dev/null
+   ```
+2. Verify the signature (optional, needs `cosign`):
+   ```
+   cosign verify --key /etc/pki/containers/dux-ws.pub ghcr.io/kmf/dux-ws:stable
+   ```
+3. Switch and reboot (use `:rolling` for the rolling channel, `dux-ws-nvidia` on NVIDIA machines):
+   ```
+   sudo bootc switch ghcr.io/kmf/dux-ws:stable
+   sudo systemctl reboot
+   ```
+4. Check with `bootc status`; it should show `ghcr.io/kmf/dux-ws`.
+
+After first boot the image installs its own key and signature policy, so later updates are verified. To go back, run `sudo bootc rollback` and reboot.
+
 ## Publish your own build
 
 1. **Generate cosign keys** (use an *empty* password, the workflow sets `COSIGN_PASSWORD=""`):
