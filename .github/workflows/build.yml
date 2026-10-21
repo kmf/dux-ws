@@ -2,15 +2,8 @@
 name: Build and publish image
 
 on:
-  pull_request:
-    branches: [main]
-  push:
-    branches: [main]
-    paths-ignore:
-      - "**/*.md"
-  schedule:
-    - cron: "0 5 * * 0" # weekly, Sunday 05:00 UTC (picks up base image + COPR updates)
-    - cron: "0 1 * * *" # nightly 03:00 SAST: :rolling only, skipped when avengemedia/dms-git is unchanged
+  # Automatic triggers (pull_request, push to main, weekly + nightly schedules) are disabled
+  # until the kmf/dux-ws-copr packages are built; run manually via workflow_dispatch.
   workflow_dispatch:
     inputs:
       nightly:
@@ -61,9 +54,9 @@ jobs:
           echo "channels=rolling" >> "${GITHUB_OUTPUT}"
           owner="${GITHUB_REPOSITORY_OWNER,,}"
           skip=true
-          for img in dank-ws dank-ws-nvidia; do
+          for img in dux-ws dux-ws-nvidia; do
             cur="$(skopeo inspect --no-tags "docker://ghcr.io/${owner}/${img}:rolling" 2>/dev/null \
-              | jq -r '.Labels["io.github.kmf.dank-ws.dms-git-fingerprint"] // ""')" || cur=""
+              | jq -r '.Labels["io.github.kmf.dux-ws.dms-git-fingerprint"] // ""')" || cur=""
             echo "${img}:rolling fingerprint: ${cur:-<none>}"
             if [ -z "${fp}" ] || [ "${cur}" != "${fp}" ]; then skip=false; fi
           done
@@ -80,10 +73,10 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - image_name: dank-ws
+          - image_name: dux-ws
             enable_nvidia: "0"
             akmods_nvidia_image: scratch
-          - image_name: dank-ws-nvidia
+          - image_name: dux-ws-nvidia
             enable_nvidia: "1"
             akmods_nvidia_image: ghcr.io/ublue-os/akmods-nvidia-open:centos-10
     env:
@@ -124,7 +117,7 @@ jobs:
               --build-arg ENABLE_NVIDIA="${ENABLE_NVIDIA}" \
               --build-arg AKMODS_NVIDIA_IMAGE="${AKMODS_NVIDIA_IMAGE}" \
               --build-arg DMS_CHANNEL="${channel}" \
-              $( [ "${channel}" = rolling ] && [ -n "${DMS_GIT_FINGERPRINT}" ] && echo --label "io.github.kmf.dank-ws.dms-git-fingerprint=${DMS_GIT_FINGERPRINT}" ) \
+              $( [ "${channel}" = rolling ] && [ -n "${DMS_GIT_FINGERPRINT}" ] && echo --label "io.github.kmf.dux-ws.dms-git-fingerprint=${DMS_GIT_FINGERPRINT}" ) \
               --build-arg IMAGE_SOURCE="${{ github.server_url }}/${{ github.repository }}" \
               --tag "${IMAGE_REF}:${channel}" \
               -f Containerfile .
@@ -150,7 +143,7 @@ jobs:
             if [ "${channel}" = "${DEFAULT_CHANNEL}" ]; then
               sudo podman tag "${IMAGE_REF}:${channel}" "${IMAGE_REF}:${DEFAULT_TAG}" "${IMAGE_REF}:${BUILD_DATE}"
             fi
-            sudo podman image inspect "${IMAGE_REF}:${channel}" --format "${channel}: {{len .RootFS.Layers}} layers, dms-git fingerprint: {{index .Labels \"io.github.kmf.dank-ws.dms-git-fingerprint\"}}"
+            sudo podman image inspect "${IMAGE_REF}:${channel}" --format "${channel}: {{len .RootFS.Layers}} layers, dms-git fingerprint: {{index .Labels \"io.github.kmf.dux-ws.dms-git-fingerprint\"}}"
           done
           sudo podman image prune -f >/dev/null || true
           # Layers shared by the two channels (everything except the DMS chunks)
