@@ -1,4 +1,4 @@
-# dank-ws: CentOS Stream 10 bootc image with niri + DankMaterialShell (dms),
+# dux-ws: CentOS Stream 10 bootc image with niri + Dux Shell (dms),
 # ghostty/kitty, and the dms-greeter/greetd login screen.
 #
 # Layout follows ublue-os/bluefin-lts: base image + one big RUN with tmpfs
@@ -10,8 +10,8 @@
 # and bridges their clipboard; niri >= 25.08 spawns it on demand, no config needed. It is not in EPEL 10;
 # the EL10 build comes from the official DMS COPR avengemedia/danklinux (DMS upstream da3b658).
 # danklinux also supplies greetd, cava and gtk4-layer-shell (and alacritty, still excluded); the
-# kmf/dank-ws-copr repo excludes those names so it cannot shadow them, and danklinux excludes
-# ghostty* so ghostty (with themes) stays from kmf/dank-ws-copr.
+# kmf/dux-ws-copr repo excludes those names so it cannot shadow them, and danklinux excludes
+# ghostty* so ghostty (with themes) stays from kmf/dux-ws-copr.
 #
 # AppImages: FUSE 2 (`fuse` = setuid /usr/bin/fusermount, `fuse-libs` = libfuse.so.2), as the AppImage
 # FUSE wiki asks for on Fedora, plus FUSE 3 (fuse3/fuse3-libs, setuid fusermount3) for newer static
@@ -26,15 +26,15 @@
 # The DMS lock screen does not use system-auth; it has its own fprintd PAM context, switched on per
 # user in DMS Settings -> Lock Screen. Enroll with `fprintd-enroll`.
 #
-# Hyprland is intentionally NOT installed: kmf/dank-ws-copr ships a rebuilt
+# Hyprland is intentionally NOT installed: kmf/dux-ws-copr ships a rebuilt
 # lua 5.5 for it, which conflicts with el10's stock lua-libs 5.4 (needed by
 # wireplumber-libs / ibus-libpinyin).
 
 ARG BASE_TAG="c10s"
 
 # Image variants (one Containerfile, two images):
-#   dank-ws         ENABLE_NVIDIA=0 (default)  codecs + extra firmware
-#   dank-ws-nvidia  ENABLE_NVIDIA=1            the above + proprietary NVIDIA driver
+#   dux-ws         ENABLE_NVIDIA=0 (default)  codecs + extra firmware
+#   dux-ws-nvidia  ENABLE_NVIDIA=1            the above + proprietary NVIDIA driver
 # For the NVIDIA variant also pass
 #   --build-arg AKMODS_NVIDIA_IMAGE=ghcr.io/ublue-os/akmods-nvidia-open:centos-10
 # which supplies the matching kernel and prebuilt kmod-nvidia rpms. It defaults
@@ -52,7 +52,7 @@ FROM ${AKMODS_NVIDIA_IMAGE} AS akmods_nvidia
 FROM quay.io/centos-bootc/centos-bootc:${BASE_TAG}
 
 ARG ENABLE_NVIDIA
-ARG IMAGE_NAME="dank-ws"
+ARG IMAGE_NAME="dux-ws"
 ARG IMAGE_VENDOR="kmf"
 ARG IMAGE_SOURCE=""
 
@@ -68,11 +68,11 @@ RUN --mount=type=tmpfs,dst=/var \
     --mount=type=tmpfs,dst=/boot \
     dnf -y install epel-release dnf-plugins-core && \
     dnf config-manager --set-enabled crb && \
-    dnf -y copr enable kmf/dank-ws-copr && \
+    dnf -y copr enable kmf/dux-ws-copr && \
     dnf -y copr enable yalter/niri && \
     dnf -y copr enable avengemedia/danklinux && \
     dnf config-manager --save --setopt='copr:copr.fedorainfracloud.org:avengemedia:danklinux.excludepkgs=ghostty*' && \
-    dnf config-manager --save --setopt='copr:copr.fedorainfracloud.org:kmf:dank-ws-copr.excludepkgs=greetd*,cava*,gtk4-layer-shell*,xwayland-satellite*,alacritty*' && \
+    dnf config-manager --save --setopt='copr:copr.fedorainfracloud.org:kmf:dux-ws-copr.excludepkgs=greetd*,cava*,gtk4-layer-shell*,xwayland-satellite*,alacritty*' && \
     dnf -y copr enable ublue-os/packages "epel-10-$(arch)" && \
     curl -fsSL --retry 3 -o /etc/yum.repos.d/brave-browser.repo \
         https://brave-browser-rpm-release.s3.brave.com/brave-browser.repo && \
@@ -83,7 +83,7 @@ RUN --mount=type=tmpfs,dst=/var \
     dnf -y install xwayland-satellite && \
     dnf list --installed greetd cava gtk4-layer-shell xwayland-satellite ghostty && \
     for p in greetd cava gtk4-layer-shell xwayland-satellite; do dnf list --installed "$p" | grep -q danklinux || exit 1; done && \
-    dnf list --installed ghostty | grep -q dank-ws-copr && \
+    dnf list --installed ghostty | grep -q dux-ws-copr && \
     test -x /usr/bin/wl-copy && test -x /usr/bin/wl-paste && test -x /usr/bin/xwayland-satellite && \
     dnf -y install gcc zstd file procps-ng git flatpak starship && \
     rpm -q starship && starship --version | head -1 && \
@@ -154,7 +154,7 @@ RUN --mount=type=tmpfs,dst=/var \
     grep -n '^ExecStart' /usr/lib/systemd/system/uupd.service && \
     systemctl enable uupd.timer && \
     systemctl mask bootc-fetch-apply-updates.timer bootc-fetch-apply-updates.service && \
-    dnf -y copr disable kmf/dank-ws-copr && \
+    dnf -y copr disable kmf/dux-ws-copr && \
     dnf -y copr disable yalter/niri && \
     dnf -y copr disable avengemedia/danklinux && \
     dnf -y copr disable ublue-os/packages && \
@@ -179,10 +179,10 @@ RUN --mount=type=tmpfs,dst=/var \
 
 # Initramfs (both variants): regenerate it once, after every package that ships dracut bits
 # (plymouth above, the swapped kernel + NVIDIA driver in the NVIDIA step), so the boot splash and
-# the graphical LUKS passphrase prompt work. The dank-ws Plymouth theme (penguin logo, see logo/)
+# the graphical LUKS passphrase prompt work. The dux-ws Plymouth theme (penguin logo, see logo/)
 # is copied in first and made the default, so it ends up in the initramfs. See build/initramfs.sh.
 # Rechunking puts the initramfs in the shared "unpackaged content + initramfs" layer.
-COPY system_files/usr/share/plymouth/themes/dank-ws/ /usr/share/plymouth/themes/dank-ws/
+COPY system_files/usr/share/plymouth/themes/dux-ws/ /usr/share/plymouth/themes/dux-ws/
 RUN --mount=type=tmpfs,dst=/var \
     --mount=type=tmpfs,dst=/tmp \
     --mount=type=tmpfs,dst=/boot \
@@ -229,7 +229,7 @@ RUN --mount=type=tmpfs,dst=/var \
     find /var -mindepth 1 -delete && \
     rm -rf /run/rhsm /run/selinux-policy
 
-# DankMaterialShell stack: everything from the avengemedia COPRs, in its own late layer
+# Dux Shell stack: everything from the avengemedia COPRs, in its own late layer
 # AFTER the heavy package/firmware/codec/NVIDIA layers, so a DMS bump only touches this
 # step. CI rechunks the image (rpm-ostree build-chunked-oci); the files of the DMS packages
 # are tagged with the user.component xattr so each of them gets a dedicated layer instead of
@@ -305,9 +305,9 @@ COPY system_files/ /
 
 # Signature enforcement: installed systems only accept our images when they carry a valid
 # cosign signature (public key = cosign.pub, signed by the CI workflow). See build/signing.sh.
-COPY cosign.pub /etc/pki/containers/dank-ws.pub
+COPY cosign.pub /etc/pki/containers/dux-ws.pub
 RUN --mount=type=bind,src=build,dst=/run/build \
-    /run/build/signing.sh "ghcr.io/${IMAGE_VENDOR}" dank-ws dank-ws-nvidia
+    /run/build/signing.sh "ghcr.io/${IMAGE_VENDOR}" dux-ws dux-ws-nvidia
 
 # Default niri + DMS config. Generated with the same command users would run
 # (`dms setup headless`; it refuses to run as root, hence `nobody`) so it always matches the
@@ -338,19 +338,19 @@ RUN --mount=type=tmpfs,dst=/tmp \
 # Branding (Bluefin LTS approach): product name in os-release, ID=centos kept so CentOS tooling still works.
 # The bootc/ostree boot entry title is "<PRETTY_NAME> (ostree:N)".
 RUN sed -i \
-        -e 's/^NAME=.*/NAME="Dank Workstation"/' \
-        -e 's/^PRETTY_NAME=.*/PRETTY_NAME="Dank Workstation 10 (Coughlan)"/' \
+        -e 's/^NAME=.*/NAME="Dux Workstation"/' \
+        -e 's/^PRETTY_NAME=.*/PRETTY_NAME="Dux Workstation 10 (Coughlan)"/' \
         -e 's/^ID_LIKE=.*/ID_LIKE="centos rhel fedora"/' \
-        -e 's|^HOME_URL=.*|HOME_URL="https://github.com/kmf/dank-ws"|' \
-        -e 's|^BUG_REPORT_URL=.*|BUG_REPORT_URL="https://github.com/kmf/dank-ws/issues"|' \
+        -e 's|^HOME_URL=.*|HOME_URL="https://github.com/kmf/dux-ws"|' \
+        -e 's|^BUG_REPORT_URL=.*|BUG_REPORT_URL="https://github.com/kmf/dux-ws/issues"|' \
         /usr/lib/os-release && \
-    printf 'VARIANT="%s"\nVARIANT_ID=%s\nDEFAULT_HOSTNAME="dank-ws"\n' "${IMAGE_NAME}" "${IMAGE_NAME}" >> /usr/lib/os-release && \
-    . /usr/lib/os-release && [ "$ID" = centos ] && [ "$VERSION_ID" = 10 ] && [ "$NAME" = "Dank Workstation" ] && \
-    [ "$ID_LIKE" = "centos rhel fedora" ] && [ "$PRETTY_NAME" = "Dank Workstation 10 (Coughlan)" ]
+    printf 'VARIANT="%s"\nVARIANT_ID=%s\nDEFAULT_HOSTNAME="dux-ws"\n' "${IMAGE_NAME}" "${IMAGE_NAME}" >> /usr/lib/os-release && \
+    . /usr/lib/os-release && [ "$ID" = centos ] && [ "$VERSION_ID" = 10 ] && [ "$NAME" = "Dux Workstation" ] && \
+    [ "$ID_LIKE" = "centos rhel fedora" ] && [ "$PRETTY_NAME" = "Dux Workstation 10 (Coughlan)" ]
 
-RUN systemctl enable flatpak-preinstall.service dank-ws-docker-group.service dank-ws-wired-autoconnect.service && \
-    test -x /usr/libexec/dank-ws-wired-autoconnect && bash -n /usr/libexec/dank-ws-wired-autoconnect && \
-    systemctl is-enabled dank-ws-wired-autoconnect.service && \
+RUN systemctl enable flatpak-preinstall.service dux-ws-docker-group.service dux-ws-wired-autoconnect.service && \
+    test -x /usr/libexec/dux-ws-wired-autoconnect && bash -n /usr/libexec/dux-ws-wired-autoconnect && \
+    systemctl is-enabled dux-ws-wired-autoconnect.service && \
     ( n=0; for k in /usr/lib/modules/*/; do \
           [ -e "${k}vmlinuz" ] || continue; n=$((n + 1)); \
           { find "$k" -name 'fuse.ko*' | grep -q . || grep -q '/fuse.ko' "${k}modules.builtin"; } || \
@@ -362,8 +362,8 @@ LABEL containers.bootc=1
 LABEL ostree.bootable=1
 LABEL org.opencontainers.image.title="${IMAGE_NAME}"
 LABEL org.opencontainers.image.vendor="${IMAGE_VENDOR}"
-LABEL org.opencontainers.image.description="CentOS Stream 10 bootc image with niri, DankMaterialShell, ghostty and kitty (nvidia variant: ENABLE_NVIDIA=${ENABLE_NVIDIA})"
+LABEL org.opencontainers.image.description="CentOS Stream 10 bootc image with niri, Dux Shell, ghostty and kitty (nvidia variant: ENABLE_NVIDIA=${ENABLE_NVIDIA})"
 LABEL org.opencontainers.image.source="${IMAGE_SOURCE}"
-LABEL io.github.kmf.dank-ws.dms-channel="${DMS_CHANNEL}"
+LABEL io.github.kmf.dux-ws.dms-channel="${DMS_CHANNEL}"
 
 RUN bootc container lint --fatal-warnings
