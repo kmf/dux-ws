@@ -10,8 +10,8 @@
 # and bridges their clipboard; niri >= 25.08 spawns it on demand, no config needed. It is not in EPEL 10;
 # the EL10 build comes from the official DMS COPR avengemedia/danklinux (DMS upstream da3b658).
 # danklinux also supplies greetd, cava and gtk4-layer-shell (and alacritty, still excluded); the
-# kmf/dux-ws-copr repo excludes those names so it cannot shadow them, and danklinux excludes
-# ghostty* so ghostty (with themes) stays from kmf/dux-ws-copr.
+# kmf/dux-ws repo excludes those names so it cannot shadow them, and danklinux excludes
+# ghostty* so ghostty (with themes) stays from kmf/dux-ws.
 #
 # AppImages: FUSE 2 (`fuse` = setuid /usr/bin/fusermount, `fuse-libs` = libfuse.so.2), as the AppImage
 # FUSE wiki asks for on Fedora, plus FUSE 3 (fuse3/fuse3-libs, setuid fusermount3) for newer static
@@ -26,7 +26,7 @@
 # The DMS lock screen does not use system-auth; it has its own fprintd PAM context, switched on per
 # user in DMS Settings -> Lock Screen. Enroll with `fprintd-enroll`.
 #
-# Hyprland is intentionally NOT installed: kmf/dux-ws-copr ships a rebuilt
+# Hyprland is intentionally NOT installed: kmf/dux-ws ships a rebuilt
 # lua 5.5 for it, which conflicts with el10's stock lua-libs 5.4 (needed by
 # wireplumber-libs / ibus-libpinyin).
 
@@ -68,11 +68,11 @@ RUN --mount=type=tmpfs,dst=/var \
     --mount=type=tmpfs,dst=/boot \
     dnf -y install epel-release dnf-plugins-core && \
     dnf config-manager --set-enabled crb && \
-    dnf -y copr enable kmf/dux-ws-copr && \
+    dnf -y copr enable kmf/dux-ws && \
     dnf -y copr enable yalter/niri && \
     dnf -y copr enable avengemedia/danklinux && \
     dnf config-manager --save --setopt='copr:copr.fedorainfracloud.org:avengemedia:danklinux.excludepkgs=ghostty*' && \
-    dnf config-manager --save --setopt='copr:copr.fedorainfracloud.org:kmf:dux-ws-copr.excludepkgs=greetd*,cava*,gtk4-layer-shell*,xwayland-satellite*,alacritty*' && \
+    dnf config-manager --save --setopt='copr:copr.fedorainfracloud.org:kmf:dux-ws.excludepkgs=greetd*,cava*,gtk4-layer-shell*,xwayland-satellite*,alacritty*' && \
     dnf -y copr enable ublue-os/packages "epel-10-$(arch)" && \
     curl -fsSL --retry 3 -o /etc/yum.repos.d/brave-browser.repo \
         https://brave-browser-rpm-release.s3.brave.com/brave-browser.repo && \
@@ -83,7 +83,7 @@ RUN --mount=type=tmpfs,dst=/var \
     dnf -y install xwayland-satellite && \
     dnf list --installed greetd cava gtk4-layer-shell xwayland-satellite ghostty && \
     for p in greetd cava gtk4-layer-shell xwayland-satellite; do dnf list --installed "$p" | grep -q danklinux || exit 1; done && \
-    dnf list --installed ghostty | grep -q dux-ws-copr && \
+    dnf list --installed ghostty | grep -q 'kmf:dux-ws' && \
     test -x /usr/bin/wl-copy && test -x /usr/bin/wl-paste && test -x /usr/bin/xwayland-satellite && \
     dnf -y install gcc zstd file procps-ng git flatpak starship && \
     rpm -q starship && starship --version | head -1 && \
@@ -154,7 +154,7 @@ RUN --mount=type=tmpfs,dst=/var \
     grep -n '^ExecStart' /usr/lib/systemd/system/uupd.service && \
     systemctl enable uupd.timer && \
     systemctl mask bootc-fetch-apply-updates.timer bootc-fetch-apply-updates.service && \
-    dnf -y copr disable kmf/dux-ws-copr && \
+    dnf -y copr disable kmf/dux-ws && \
     dnf -y copr disable yalter/niri && \
     dnf -y copr disable avengemedia/danklinux && \
     dnf -y copr disable ublue-os/packages && \

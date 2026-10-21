@@ -3,7 +3,7 @@ name: Build and publish image
 
 on:
   # Automatic triggers (pull_request, push to main, weekly + nightly schedules) are disabled
-  # until the kmf/dux-ws-copr packages are built; run manually via workflow_dispatch.
+  # until the kmf/dux-ws COPR packages are built; run manually via workflow_dispatch.
   workflow_dispatch:
     inputs:
       nightly:

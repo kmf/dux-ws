@@ -32,11 +32,11 @@
   **Brave Origin** (browser) and **Docker Engine** (`docker-ce`) - see [Extra components](#extra-components)
 
 Packages come from EPEL/CRB plus the COPRs `avengemedia/danklinux`, `avengemedia/dms` or `avengemedia/dms-git`,
-`yalter/niri` and [`kmf/dux-ws-copr`](https://github.com/kmf/dux-ws-copr) (which also ships starship, repackaged from upstream releases; it is not in EPEL 10). xwayland-satellite (not in EPEL 10) comes from `avengemedia/danklinux`.
+`yalter/niri` and [`kmf/dux-ws`](https://github.com/kmf/dux-ws) (which also ships starship, repackaged from upstream releases; it is not in EPEL 10). xwayland-satellite (not in EPEL 10) comes from `avengemedia/danklinux`.
 The COPR repos are disabled again at the end of the build. Brave's and Docker's yum repos are
 left on disk but disabled (`enabled=0`) after install, so updates come from rebuilding the image.
 
-**Hyprland is intentionally not included**: `kmf/dux-ws-copr` ships a rebuilt `lua` 5.5 for it,
+**Hyprland is intentionally not included**: `kmf/dux-ws` ships a rebuilt `lua` 5.5 for it,
 which conflicts with el10's stock `lua-libs` 5.4 (needed by `wireplumber-libs`, `ibus-libpinyin`).
 
 ## Image variants
@@ -124,7 +124,7 @@ Docker's CentOS repo; `docker.service` and `containerd.service` are enabled.
   Docker, not the compat shim alongside.
 
 ### Starship
-Installed from `kmf/dux-ws-copr` (upstream release binaries, tracking the latest starship). `/etc/profile.d/starship.sh` initialises it for interactive
+Installed from `kmf/dux-ws` (upstream release binaries, tracking the latest starship). `/etc/profile.d/starship.sh` initialises it for interactive
 bash/zsh (skipped for `TERM=dumb`/`linux` and when `~/.config/no-starship` exists). Without a
 `~/.config/starship.toml` the system default `/etc/starship.toml` (no Nerd Font glyphs required) is used.
 
@@ -389,7 +389,7 @@ PCR 7 binds to the Secure Boot state, so re-enroll after changing Secure Boot ke
   VM without 3D (e.g. the stock RHEL/CentOS `qemu-kvm`, which has no `virtio-vga-gl`) the greeter shows a
   black screen although greetd, niri and quickshell are all running. Real GPUs are fine.
 - greetd/greeter details to verify on first boot: `getent passwd greeter`, `/var/cache/dms-greeter`
-  ownership, `systemctl status greetd`. If the `greetd` package from `kmf/dux-ws-copr` uses a
+  ownership, `systemctl status greetd`. If the `greetd` package from `kmf/dux-ws` uses a
   different default user (its spec rewrites `greeter` to `greetd`), keep `user =` in
   `system_files/etc/greetd/config.toml` consistent with the account that exists.
 - Only `linux/amd64` is built by the workflow; add an arm64 runner matrix only after checking that
