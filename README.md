@@ -31,8 +31,8 @@
 - **Homebrew** (Linuxbrew, unpacked on first boot), **Bazaar** (Flathub app store, Flatpak),
   **Brave Origin** (browser) and **Docker Engine** (`docker-ce`) - see [Extra components](#extra-components)
 
-Packages come from EPEL/CRB plus the COPRs `avengemedia/danklinux`, `avengemedia/dms` or `avengemedia/dms-git`,
-`yalter/niri` and [`kmf/dux-ws`](https://github.com/kmf/dux-ws) (which also ships starship, repackaged from upstream releases; it is not in EPEL 10). xwayland-satellite (not in EPEL 10) comes from `avengemedia/danklinux`.
+Packages come from EPEL/CRB plus the COPRs `duxlabs/dux`, `duxlabs/dms` or `duxlabs/dms-git`,
+`yalter/niri` and [`kmf/dux-ws`](https://github.com/kmf/dux-ws) (which also ships starship, repackaged from upstream releases; it is not in EPEL 10). xwayland-satellite (not in EPEL 10) comes from `duxlabs/dux`.
 The COPR repos are disabled again at the end of the build. Brave's and Docker's yum repos are
 left on disk but disabled (`enabled=0`) after install, so updates come from rebuilding the image.
 
@@ -56,8 +56,8 @@ Each image is published in two DMS channels (`--build-arg DMS_CHANNEL=stable|rol
 
 | Tag | DMS from | Notes |
 |---|---|---|
-| `:stable` | `avengemedia/dms` (tagged DMS releases) + `quickshell` | |
-| `:rolling` | `avengemedia/dms-git` (git snapshots) + `quickshell-git` | newest features, can break |
+| `:stable` | `duxlabs/dms` (tagged DMS releases) + `quickshell` | |
+| `:rolling` | `duxlabs/dms-git` (git snapshots) + `quickshell-git` | newest features, can break |
 | `:latest` | same image as `:rolling` | kept for systems installed from older ISOs, which track it; current ISOs install `:stable` |
 
 Everything else in the image is identical. Every image (both channels, x86_64 and aarch64) ships [Tailscale](https://tailscale.com)

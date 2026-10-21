@@ -8,7 +8,7 @@
 # installation destination (with the "Encrypt my data" LUKS checkbox and custom
 # partitioning) and user creation are all asked on the target machine.
 #
-# The ISOs embed and install the :stable DMS channel (avengemedia/dms). After install, %post
+# The ISOs embed and install the :stable DMS channel (duxlabs/dms). After install, %post
 # re-points the system at the published GHCR image (@IMAGE@ = ghcr.io/<owner>/<image>:stable) so it
 # keeps receiving updates (bootc/uupd) instead of staying on the embedded copy. Users can then
 # `bootc switch` to :rolling (see README, "Choosing a DMS channel").

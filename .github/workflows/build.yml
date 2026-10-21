@@ -37,14 +37,14 @@ jobs:
       skip: ${{ steps.plan.outputs.skip }}
       dms_git_fingerprint: ${{ steps.plan.outputs.fingerprint }}
     steps:
-      - name: Decide channels and check avengemedia/dms-git for changes
+      - name: Decide channels and check duxlabs/dms-git for changes
         id: plan
         env:
           NIGHTLY: ${{ github.event.schedule == '0 1 * * *' || inputs.nightly == true }}
         run: |
           # Fingerprint = name:latest-succeeded-build-id of every package in the dms-git COPR
           # (dms-git, quickshell-git, ...). Stored as a label on :rolling to detect changes.
-          fp="$(curl -fsS --retry 3 "https://copr.fedorainfracloud.org/api_3/package/list?ownername=avengemedia&projectname=dms-git&with_latest_succeeded_build=true" \
+          fp="$(curl -fsS --retry 3 "https://copr.fedorainfracloud.org/api_3/package/list?ownername=duxlabs&projectname=dms-git&with_latest_succeeded_build=true" \
             | jq -r '[.items[] | select(.builds.latest_succeeded != null) | "\(.name):\(.builds.latest_succeeded.id)"] | sort | join(",")')" || fp=""
           echo "fingerprint=${fp}" >> "${GITHUB_OUTPUT}"
           echo "dms-git COPR fingerprint: ${fp:-<unavailable>}"
@@ -61,7 +61,7 @@ jobs:
             if [ -z "${fp}" ] || [ "${cur}" != "${fp}" ]; then skip=false; fi
           done
           echo "skip=${skip}" >> "${GITHUB_OUTPUT}"
-          [ "${skip}" = true ] && echo "::notice::avengemedia/dms-git unchanged since the last :rolling build, skipping" || true
+          [ "${skip}" = true ] && echo "::notice::duxlabs/dms-git unchanged since the last :rolling build, skipping" || true
 
   build_push:
     name: Build and push ${{ matrix.image_name }}
@@ -127,7 +127,7 @@ jobs:
       - name: Rechunk image by package
         # Re-split the image into content-addressed chunks grouped by package (as Bluefin does),
         # so unchanged packages keep identical layer digests across fresh, cache-less CI builds
-        # and an update only downloads the chunks whose packages changed (e.g. the avengemedia
+        # and an update only downloads the chunks whose packages changed (e.g. the duxlabs
         # COPR / DMS stack gets its own chunks). Both channels are built from the same cached
         # lower layers, so switching :stable <-> :rolling only downloads the DMS chunks.
         run: |

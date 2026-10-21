@@ -8,7 +8,7 @@
 # as a cliphist dependency). DMS keeps its clipboard history itself (dms server, ext-data-control),
 # so no `wl-paste --watch cliphist store` watcher is needed. xwayland-satellite gives X11 apps a display
 # and bridges their clipboard; niri >= 25.08 spawns it on demand, no config needed. It is not in EPEL 10;
-# the EL10 build comes from the official DMS COPR avengemedia/danklinux (DMS upstream da3b658).
+# the EL10 build comes from the official DMS COPR duxlabs/dux (DMS upstream da3b658).
 # danklinux also supplies greetd, cava and gtk4-layer-shell (and alacritty, still excluded); the
 # kmf/dux-ws repo excludes those names so it cannot shadow them, and danklinux excludes
 # ghostty* so ghostty (with themes) stays from kmf/dux-ws.
@@ -70,8 +70,8 @@ RUN --mount=type=tmpfs,dst=/var \
     dnf config-manager --set-enabled crb && \
     dnf -y copr enable kmf/dux-ws && \
     dnf -y copr enable yalter/niri && \
-    dnf -y copr enable avengemedia/danklinux && \
-    dnf config-manager --save --setopt='copr:copr.fedorainfracloud.org:avengemedia:danklinux.excludepkgs=ghostty*' && \
+    dnf -y copr enable duxlabs/dux && \
+    dnf config-manager --save --setopt='copr:copr.fedorainfracloud.org:duxlabs:dux.excludepkgs=ghostty*' && \
     dnf config-manager --save --setopt='copr:copr.fedorainfracloud.org:kmf:dux-ws.excludepkgs=greetd*,cava*,gtk4-layer-shell*,xwayland-satellite*,alacritty*' && \
     dnf -y copr enable ublue-os/packages "epel-10-$(arch)" && \
     curl -fsSL --retry 3 -o /etc/yum.repos.d/brave-browser.repo \
@@ -156,7 +156,7 @@ RUN --mount=type=tmpfs,dst=/var \
     systemctl mask bootc-fetch-apply-updates.timer bootc-fetch-apply-updates.service && \
     dnf -y copr disable kmf/dux-ws && \
     dnf -y copr disable yalter/niri && \
-    dnf -y copr disable avengemedia/danklinux && \
+    dnf -y copr disable duxlabs/dux && \
     dnf -y copr disable ublue-os/packages && \
     sed -i 's/^enabled=1/enabled=0/' /etc/yum.repos.d/brave-browser.repo /etc/yum.repos.d/docker-ce.repo && \
     dnf clean all && \
@@ -229,15 +229,15 @@ RUN --mount=type=tmpfs,dst=/var \
     find /var -mindepth 1 -delete && \
     rm -rf /run/rhsm /run/selinux-policy
 
-# Dux Shell stack: everything from the avengemedia COPRs, in its own late layer
+# Dux Shell stack: everything from the duxlabs COPRs, in its own late layer
 # AFTER the heavy package/firmware/codec/NVIDIA layers, so a DMS bump only touches this
 # step. CI rechunks the image (rpm-ostree build-chunked-oci); the files of the DMS packages
 # are tagged with the user.component xattr so each of them gets a dedicated layer instead of
 # being packed into shared size-balanced chunks.
 #
 # DMS_CHANNEL picks the upstream DMS COPR (published as separate image tags, see README):
-#   stable   avengemedia/dms      tagged DMS releases + quickshell
-#   rolling  avengemedia/dms-git  DMS git snapshots + quickshell-git   (:latest follows this)
+#   stable   duxlabs/dms      tagged DMS releases + quickshell
+#   rolling  duxlabs/dms-git  DMS git snapshots + quickshell-git   (:latest follows this)
 # Everything above this step is identical for both channels, so with a shared build cache both
 # channels share every layer except the DMS ones. Unpackaged files this step (and the
 # `dms setup` step below) writes, e.g. the rpmdb, /etc/passwd and the COPR .repo files, are
@@ -248,11 +248,11 @@ RUN --mount=type=tmpfs,dst=/var \
     --mount=type=tmpfs,dst=/boot \
     touch /tmp/dms-step-start && \
     case "${DMS_CHANNEL}" in \
-        stable)  DMS_COPR=avengemedia/dms;     QUICKSHELL=quickshell ;; \
-        rolling) DMS_COPR=avengemedia/dms-git; QUICKSHELL=quickshell-git ;; \
+        stable)  DMS_COPR=duxlabs/dms;     QUICKSHELL=quickshell ;; \
+        rolling) DMS_COPR=duxlabs/dms-git; QUICKSHELL=quickshell-git ;; \
         *) echo "DMS_CHANNEL must be stable or rolling, got '${DMS_CHANNEL}'" >&2; exit 1 ;; \
     esac && \
-    dnf -y copr enable avengemedia/danklinux && \
+    dnf -y copr enable duxlabs/dux && \
     dnf -y copr enable "${DMS_COPR}" && \
     dnf -y install --enablerepo=epel \
         "${QUICKSHELL}" matugen cliphist danksearch dgop dankcalendar-git dms dms-greeter && \
@@ -267,7 +267,7 @@ RUN --mount=type=tmpfs,dst=/var \
         test -n "$(getfattr --absolute-names -n user.component --only-values "$(rpm -ql "$pkg" | while read -r f; do [ -f "$f" ] && [ ! -L "$f" ] && echo "$f" && break; done)")"; \
     done && \
     systemctl --global enable dms.service && \
-    dnf -y copr disable avengemedia/danklinux && \
+    dnf -y copr disable duxlabs/dux && \
     dnf -y copr disable "${DMS_COPR}" && \
     dnf clean all && \
     find /usr /etc -xdev -type f -newer /tmp/dms-step-start -print0 | \
