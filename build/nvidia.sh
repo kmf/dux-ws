@@ -53,14 +53,21 @@ dnf config-manager --set-disabled fedora-nvidia
 
 # Exclude the akmods tooling package: we ship prebuilt kmods only, and even with
 # the mount moved off /run/akmods we do not want build-time tooling in the image.
-dnf -y install --enablerepo=fedora-nvidia --exclude=akmods \
-    "${AKMODS}"/rpms/kmods/kmod-nvidia-"${KERNEL_VRA}"-*.rpm \
+# Pin nvidia-kmod-common to the prebuilt kmod's version and exclude dkms-nvidia:
+# when negativo17 ships a newer driver than ublue's akmods, dnf otherwise pulls
+# the newer nvidia-kmod-common plus dkms-nvidia and the matching userspace
+# install below becomes unresolvable.
+KMOD_RPM="$(ls "${AKMODS}"/rpms/kmods/kmod-nvidia-"${KERNEL_VRA}"-*.rpm | head -1)"
+KMOD_VERSION="$(rpm -qp --queryformat '%{VERSION}' "${KMOD_RPM}")"
+dnf -y install --enablerepo=fedora-nvidia --exclude=akmods --exclude='dkms-nvidia*' \
+    "${KMOD_RPM}" \
+    "nvidia-kmod-common-3:${KMOD_VERSION}" \
     "${AKMODS}"/rpms/ublue-os/*.rpm
 dnf config-manager --set-enabled nvidia-container-toolkit
 
 KMOD_VERSION="$(rpm -q --queryformat '%{VERSION}' kmod-nvidia)"
 NVIDIA_PKG_VERSION="3:${KMOD_VERSION}"
-dnf -y install --enablerepo=fedora-nvidia \
+dnf -y install --enablerepo=fedora-nvidia --exclude='dkms-nvidia*' \
     "libnvidia-fbc-${NVIDIA_PKG_VERSION}" \
     "nvidia-driver-${NVIDIA_PKG_VERSION}" \
     "nvidia-driver-cuda-${NVIDIA_PKG_VERSION}" \
